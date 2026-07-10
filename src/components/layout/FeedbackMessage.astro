@@ -1,0 +1,12 @@
+---
+interface Props {
+  type: 'success' | 'error';
+  message: string;
+}
+
+const { type, message } = Astro.props;
+---
+
+<div class={`feedback-msg ${type}`} role="alert">
+  {message}
+</div>

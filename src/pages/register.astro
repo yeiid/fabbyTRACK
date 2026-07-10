@@ -1,0 +1,149 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Registrarse">
+	<main class="auth-page">
+		<div class="auth-card glass-card">
+			<div class="auth-brand">
+				<div class="auth-logo">F</div>
+				<h1>FabbyTRACK</h1>
+				<p class="auth-tagline">Comienza tu transformación hoy</p>
+			</div>
+			
+			<form class="form-stack" id="registerForm">
+				<div id="error-message" class="error-msg" style="display: none;"></div>
+				
+				<div class="form-group">
+					<label for="name">Nombre Completo</label>
+					<input type="text" id="name" name="name" placeholder="Juan Pérez" required />
+				</div>
+
+				<div class="form-group">
+					<label for="email">Email</label>
+					<input type="email" id="email" name="email" placeholder="tu@email.com" required />
+				</div>
+				
+				<div class="form-group">
+					<label for="password">Contraseña</label>
+					<input type="password" id="password" name="password" placeholder="••••••••" required />
+				</div>
+
+				<button type="submit" id="submitBtn" class="btn btn-primary btn-block">Registrarme</button>
+			</form>
+
+			<div class="auth-footer">
+				<p>¿Ya tienes cuenta? <a href="/login">Inicia Sesión</a></p>
+			</div>
+		</div>
+	</main>
+</BaseLayout>
+
+<script>
+	const registerForm = document.getElementById('registerForm') as HTMLFormElement;
+	const errorMsg = document.getElementById('error-message') as HTMLDivElement;
+	const submitBtn = document.getElementById('submitBtn') as HTMLButtonElement;
+
+	registerForm.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		errorMsg.style.display = 'none';
+		submitBtn.disabled = true;
+		submitBtn.textContent = 'Procesando...';
+
+		const formData = new FormData(registerForm);
+		
+		try {
+			const response = await fetch('/api/auth/register', {
+				method: 'POST',
+				body: formData
+			});
+
+			const result = await response.json();
+
+			if (response.ok) {
+				window.location.href = '/dashboard/profile';
+			} else {
+				errorMsg.textContent = result.message || 'Error al registrarse';
+				errorMsg.style.display = 'block';
+			}
+		} catch {
+			errorMsg.textContent = 'Error de conexión';
+			errorMsg.style.display = 'block';
+		} finally {
+			submitBtn.disabled = false;
+			submitBtn.textContent = 'Registrarme';
+		}
+	});
+</script>
+
+<style>
+	.auth-page {
+		min-height: 100vh;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: var(--spacing-lg);
+		background: radial-gradient(ellipse at top right, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+	}
+
+	.auth-card {
+		width: 100%;
+		max-width: 400px;
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-xl);
+		animation: fadeIn 0.4s ease;
+	}
+
+	.auth-brand {
+		text-align: center;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--spacing-sm);
+	}
+
+	.auth-logo {
+		width: 56px;
+		height: 56px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: linear-gradient(135deg, var(--primary-500), var(--accent-400));
+		border-radius: 16px;
+		font-weight: 800;
+		font-size: 1.5rem;
+		color: white;
+		font-family: 'Outfit', sans-serif;
+		margin-bottom: var(--spacing-xs);
+		box-shadow: 0 8px 24px rgba(124, 58, 237, 0.3);
+	}
+
+	.auth-brand h1 {
+		font-size: 2rem;
+		background: linear-gradient(135deg, var(--text-primary) 0%, var(--primary-500) 100%);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+	}
+
+	.auth-tagline {
+		color: var(--text-secondary);
+		font-size: var(--text-sm);
+	}
+
+	.auth-footer {
+		text-align: center;
+		font-size: 0.9rem;
+		color: var(--text-secondary);
+	}
+
+	.auth-footer a {
+		color: var(--primary-500);
+		font-weight: 600;
+	}
+
+	.auth-footer a:hover {
+		color: var(--primary-600);
+		text-decoration: underline;
+	}
+</style>

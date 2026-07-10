@@ -1,0 +1,16 @@
+services:
+  app:
+    build: .
+    container_name: fabbytrack-app
+    ports:
+      - "4321:4321"
+    environment:
+      - NODE_ENV=production
+      - HOST=0.0.0.0
+      - PORT=4321
+    volumes:
+      - fabbytrack-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  fabbytrack-data:

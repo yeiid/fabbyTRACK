@@ -1,0 +1,318 @@
+---
+// src/pages/dashboard/profile.astro
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const session = Astro.cookies.get('user_session')?.json();
+if (!session) {
+	return Astro.redirect('/login');
+}
+---
+
+<BaseLayout title="Mi Perfil">
+	<main class="profile-page">
+		<header class="profile-header">
+			<a href="/dashboard" class="btn-back">
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+				Volver al Dashboard
+			</a>
+			<h1>Mi Perfil Fitness</h1>
+			<p>Completa tus datos para que tu coach pueda personalizar tu plan.</p>
+		</header>
+
+		<div class="profile-grid">
+			<!-- Datos Básicos -->
+			<section class="glass-card">
+				<h2>Datos Generales</h2>
+				<form id="general-form" class="glass-form">
+					<div class="form-row">
+						<div class="form-group">
+							<label for="age">Edad</label>
+							<input type="number" id="age" name="age" placeholder="25">
+						</div>
+						<div class="form-group">
+							<label for="gender">Género</label>
+							<select id="gender" name="gender">
+								<option value="M">Masculino</option>
+								<option value="F">Femenino</option>
+								<option value="O">Otro</option>
+							</select>
+						</div>
+					</div>
+
+					<div class="form-row">
+						<div class="form-group">
+							<label for="weight_kg">Peso Inicial (kg)</label>
+							<input type="number" step="0.1" id="weight_kg" name="weight_kg" placeholder="70.5">
+						</div>
+						<div class="form-group">
+							<label for="height_cm">Talla Inicial (cm)</label>
+							<input type="number" id="height_cm" name="height_cm" placeholder="175">
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label for="goal">Mi Objetivo</label>
+						<select id="goal" name="goal">
+							<option value="lose_fat">Perder Grasa</option>
+							<option value="gain_muscle">Ganar Músculo</option>
+							<option value="maintain">Mantenimiento / Recomposición</option>
+						</select>
+					</div>
+
+					<div id="general-feedback" class="feedback-msg" style="display: none;"></div>
+					<button type="submit" class="btn btn-primary">Guardar Datos Generales</button>
+				</form>
+			</section>
+
+			<!-- Seguimiento de Medidas -->
+			<section class="glass-card">
+				<h2>Progreso y Seguimiento</h2>
+				<p class="subtitle">Registra tus medidas actuales (cm)</p>
+				<form id="measurements-form" class="glass-form">
+					<div class="measurements-grid">
+						<div class="form-group">
+							<label>Pierna Izq</label>
+							<input type="number" step="0.1" name="leg_left_cm" placeholder="0">
+						</div>
+						<div class="form-group">
+							<label>Pierna Der</label>
+							<input type="number" step="0.1" name="leg_right_cm" placeholder="0">
+						</div>
+						<div class="form-group">
+							<label>Pantorrilla</label>
+							<input type="number" step="0.1" name="calf_cm" placeholder="0">
+						</div>
+						<div class="form-group">
+							<label>Glúteo</label>
+							<input type="number" step="0.1" name="glute_cm" placeholder="0">
+						</div>
+						<div class="form-group">
+							<label>Abdomen</label>
+							<input type="number" step="0.1" name="abdomen_cm" placeholder="0">
+						</div>
+						<div class="form-group">
+							<label>Cintura</label>
+							<input type="number" step="0.1" name="waist_cm" placeholder="0">
+						</div>
+						<div class="form-group">
+							<label>Busto/Pecho</label>
+							<input type="number" step="0.1" name="chest_cm" placeholder="0">
+						</div>
+						<div class="form-group">
+							<label>Brazo</label>
+							<input type="number" step="0.1" name="arm_cm" placeholder="0">
+						</div>
+					</div>
+
+					<div class="photo-upload">
+						<div class="photo-placeholder">
+							<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+							<span>Subir Foto de Progreso</span>
+							<input type="file" id="photo-input" accept="image/*">
+						</div>
+					</div>
+
+					<div id="measurements-feedback" class="feedback-msg" style="display: none;"></div>
+			<button type="submit" class="btn btn-outline btn-block">Registrar Medidas</button>
+				</form>
+			</section>
+		</div>
+	</main>
+</BaseLayout>
+
+<script>
+	const generalForm = document.getElementById('general-form') as HTMLFormElement;
+	const measurementsForm = document.getElementById('measurements-form') as HTMLFormElement;
+	const generalFeedback = document.getElementById('general-feedback') as HTMLDivElement;
+	const measurementsFeedback = document.getElementById('measurements-feedback') as HTMLDivElement;
+
+	function showFeedback(el: HTMLElement, message: string, isError = false) {
+		el.textContent = message;
+		el.style.display = 'block';
+		el.className = `feedback-msg ${isError ? 'error' : 'success'}`;
+		setTimeout(() => { el.style.display = 'none'; }, 3000);
+	}
+
+	async function loadProfile() {
+		try {
+			const response = await fetch('/api/users/profile');
+			const profile = await response.json();
+			if (profile) {
+				Object.keys(profile).forEach(key => {
+					const input = generalForm.querySelector(`[name="${key}"]`) as HTMLInputElement | HTMLSelectElement | null;
+					if (input) input.value = profile[key];
+				});
+			}
+		} catch (error) {
+			console.error('Error loading profile:', error);
+		}
+	}
+
+	generalForm.onsubmit = async (e) => {
+		e.preventDefault();
+		const formData = new FormData(generalForm);
+		const data = Object.fromEntries(formData);
+
+		try {
+			const response = await fetch('/api/users/profile', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(data)
+			});
+			if (response.ok) {
+				showFeedback(generalFeedback, '¡Perfil actualizado correctamente!');
+			} else {
+				const err = await response.json();
+				showFeedback(generalFeedback, err.message || 'Error al guardar', true);
+			}
+		} catch (error) {
+			showFeedback(generalFeedback, 'Error de conexión', true);
+		}
+	};
+
+	measurementsForm.onsubmit = async (e) => {
+		e.preventDefault();
+		const formData = new FormData(measurementsForm);
+		const data = Object.fromEntries(formData);
+
+		try {
+			const response = await fetch('/api/progress/measurements', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(data)
+			});
+			if (response.ok) {
+				showFeedback(measurementsFeedback, '¡Medidas registradas con éxito!');
+				measurementsForm.reset();
+			} else {
+				const err = await response.json();
+				showFeedback(measurementsFeedback, err.message || 'Error al registrar', true);
+			}
+		} catch (error) {
+			showFeedback(measurementsFeedback, 'Error de conexión', true);
+		}
+	};
+
+	loadProfile();
+</script>
+
+<style>
+	.profile-page {
+		padding: var(--spacing-xl);
+		max-width: 1000px;
+		margin: 0 auto;
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-xl);
+	}
+
+	.profile-header h1 {
+		font-size: 2.5rem;
+		margin-top: var(--spacing-sm);
+	}
+
+	.profile-header p {
+		color: var(--text-secondary);
+	}
+
+	.btn-back {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-xs);
+		color: var(--text-secondary);
+		font-size: 0.9rem;
+	}
+
+	.profile-grid {
+		display: grid;
+		grid-template-columns: 1fr 1.2fr;
+		gap: var(--spacing-xl);
+		align-items: start;
+	}
+
+	.glass-form {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-lg);
+		margin-top: var(--spacing-md);
+	}
+
+	.form-row {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: var(--spacing-md);
+	}
+
+	.measurements-grid {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: var(--spacing-md);
+	}
+
+	.form-group {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	.form-group label {
+		font-size: 0.85rem;
+		color: var(--text-secondary);
+	}
+
+	.form-group input, .form-group select {
+		background: rgba(255, 255, 255, 0.05);
+		border: 1px solid var(--border-subtle);
+		padding: 0.6rem 0.8rem;
+		border-radius: var(--radius-sm);
+		color: white;
+		outline: none;
+		color-scheme: dark;
+	}
+
+	.form-group select option {
+		background: #1a1a2e;
+		color: #f8fafc;
+	}
+
+	.photo-upload {
+		margin-top: var(--spacing-md);
+	}
+
+	.photo-placeholder {
+		height: 120px;
+		border: 2px dashed var(--border-subtle);
+		border-radius: var(--radius-md);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: var(--spacing-sm);
+		color: var(--text-secondary);
+		cursor: pointer;
+		position: relative;
+		transition: all 0.2s ease;
+	}
+
+	.photo-placeholder:hover {
+		border-color: var(--primary-500);
+		background: rgba(124, 58, 237, 0.05);
+	}
+
+	.photo-placeholder input {
+		position: absolute;
+		inset: 0;
+		opacity: 0;
+		cursor: pointer;
+	}
+
+	.btn-block {
+		width: 100%;
+	}
+
+	@media (max-width: 800px) {
+		.profile-grid {
+			grid-template-columns: 1fr;
+		}
+	}
+</style>

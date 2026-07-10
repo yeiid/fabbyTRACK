@@ -1,0 +1,44 @@
+---
+interface Props {
+  id?: string;
+  title?: string;
+  maxWidth?: string;
+}
+
+const { id, title, maxWidth = '500px' } = Astro.props;
+---
+
+<div class="modal" id={id}>
+  <div class="modal-content" style={`max-width: ${maxWidth}`}>
+    {title && (
+      <div class="modal-header">
+        <h2>{title}</h2>
+        <button class="modal-close" aria-label="Cerrar">&times;</button>
+      </div>
+    )}
+    <slot />
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.modal').forEach((modal) => {
+    const closeBtn = modal.querySelector('.modal-close');
+    const backdrop = modal;
+
+    closeBtn?.addEventListener('click', () => {
+      (modal as HTMLElement).style.display = 'none';
+    });
+
+    backdrop?.addEventListener('click', (e) => {
+      if (e.target === backdrop) {
+        (modal as HTMLElement).style.display = 'none';
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && (modal as HTMLElement).style.display !== 'none') {
+        (modal as HTMLElement).style.display = 'none';
+      }
+    });
+  });
+</script>

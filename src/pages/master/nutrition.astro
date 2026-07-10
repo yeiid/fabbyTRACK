@@ -1,0 +1,366 @@
+---
+// src/pages/master/nutrition.astro
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import MasterNav from '../../components/layout/MasterNav.astro';
+import PageHeader from '../../components/layout/PageHeader.astro';
+import Modal from '../../components/layout/Modal.astro';
+
+const session = Astro.cookies.get('user_session')?.json();
+if (!session || session.role !== 'master') {
+	return Astro.redirect('/login');
+}
+---
+
+<BaseLayout title="Gestión de Nutrición">
+	<MasterNav />
+	<main class="master-nutrition">
+		<PageHeader title="Catálogo de Nutrición" href="/master" linkText="Volver">
+			<button id="add-meal-btn" class="btn btn-primary">
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;"><path d="M12 5v14M5 12h14"/></svg>
+				Nueva Receta
+			</button>
+		</PageHeader>
+
+		<Modal id="meal-modal" title="Configurar Comida" maxWidth="550px">
+			<p style="text-align: center; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: var(--spacing-lg);">Añade platos equilibrados para tus planes</p>
+			
+			<form id="meal-form" class="form-stack">
+				<div class="form-group">
+					<label for="name">Nombre del Plato</label>
+					<input type="text" id="name" name="name" placeholder="Ej: Bowl de Pollo y Quinoa" required>
+				</div>
+
+				<div class="form-row">
+					<div class="form-group">
+						<label for="meal_type">Tipo de Comida</label>
+						<select id="meal_type" name="meal_type">
+							<option value="breakfast">Desayuno</option>
+							<option value="lunch">Almuerzo</option>
+							<option value="dinner">Cena</option>
+							<option value="snack">Snack / Merienda</option>
+						</select>
+					</div>
+					<div class="form-group">
+						<label for="total_calories">Calorías Totales</label>
+						<input type="number" id="total_calories" name="total_calories" placeholder="Ej: 550">
+					</div>
+				</div>
+
+				<div class="macros-grid">
+					<div class="form-group">
+						<label>Proteína (g)</label>
+						<input type="number" name="protein_g" placeholder="0">
+					</div>
+					<div class="form-group">
+						<label>Carbos (g)</label>
+						<input type="number" name="carbs_g" placeholder="0">
+					</div>
+					<div class="form-group">
+						<label>Grasas (g)</label>
+						<input type="number" name="fat_g" placeholder="0">
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="photo_url">URL de Imagen (Opcional)</label>
+					<input type="url" id="photo_url" name="photo_url" placeholder="https://...">
+				</div>
+
+				<div class="form-group">
+					<label>Ingredientes</label>
+					<textarea id="ingredients-text" rows="3" placeholder="Ej: 200g Pollo, 100g Arroz..."></textarea>
+				</div>
+
+				<div class="modal-actions">
+					<button type="button" class="btn btn-outline modal-close">Cancelar</button>
+					<button type="submit" class="btn btn-primary">Guardar Receta</button>
+				</div>
+			</form>
+		</Modal>
+
+		<section class="meals-grid" id="meals-container">
+			<div class="loading-state">
+				<div class="loader"></div>
+				<p>Cargando recetas saludables...</p>
+			</div>
+		</section>
+	</main>
+</BaseLayout>
+
+<script>
+	const modal = document.getElementById('meal-modal')!;
+	const form = document.getElementById('meal-form') as HTMLFormElement;
+	const container = document.getElementById('meals-container')!;
+	const addBtn = document.getElementById('add-meal-btn')!;
+
+	async function fetchMeals() {
+		try {
+			const response = await fetch('/api/nutrition/meals');
+			const meals = await response.json();
+
+			if (meals.length === 0) {
+				container.innerHTML = `
+					<div class="empty-state">
+						<p>No hay recetas en el catálogo. Comienza añadiendo una.</p>
+					</div>
+				`;
+				return;
+			}
+
+			container.innerHTML = meals.map((meal: any) => `
+				<div class="meal-card glass-card" data-meal-id="${meal.id}">
+					<div class="card-image-wrapper">
+						${meal.photo_url ? `<img src="${meal.photo_url}" alt="${meal.name}" class="meal-img">` : `
+							<div class="meal-img-placeholder">
+								<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+							</div>
+						`}
+						<span class="type-badge badge-${meal.meal_type}">${meal.meal_type}</span>
+						<button class="btn-delete-float delete-meal-btn" title="Eliminar">
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+						</button>
+					</div>
+					
+					<div class="card-info">
+						<h3>${meal.name}</h3>
+						
+						<div class="macros-strip">
+							<div class="macro-item kcal">
+								<span class="m-val">${meal.total_calories || 0}</span>
+								<span class="m-label">Kcal</span>
+							</div>
+							<div class="macro-item prot">
+								<span class="m-val">${meal.protein_g || 0}g</span>
+								<span class="m-label">Prot</span>
+							</div>
+							<div class="macro-item carbs">
+								<span class="m-val">${meal.carbs_g || 0}g</span>
+								<span class="m-label">Carb</span>
+							</div>
+							<div class="macro-item fats">
+								<span class="m-val">${meal.fat_g || 0}g</span>
+								<span class="m-label">Gras</span>
+							</div>
+						</div>
+
+						${meal.ingredients && meal.ingredients.length > 0 ? `
+							<div class="ing-preview">
+								${meal.ingredients.slice(0, 2).map((ing: any) => `<span>• ${ing.ingredient_name}</span>`).join('')}
+								${meal.ingredients.length > 2 ? `<span class="more">+${meal.ingredients.length - 2} más</span>` : ''}
+							</div>
+						` : ''}
+					</div>
+				</div>
+			`).join('');
+		} catch (error) {
+			container.innerHTML = '<div class="error-state">Error al cargar recetas.</div>';
+		}
+	}
+
+	async function deleteMeal(id: number) {
+		if (!confirm('¿Estás seguro de eliminar esta comida?')) return;
+		try {
+			const response = await fetch('/api/nutrition/' + id, { method: 'DELETE' });
+			if (response.ok) fetchMeals();
+		} catch (error) {
+			console.error('Delete error:', error);
+		}
+	}
+
+	addBtn.onclick = () => {
+		form.reset();
+		modal.style.display = 'flex';
+	};
+
+	form.onsubmit = async (e) => {
+		e.preventDefault();
+		const formData = new FormData(form);
+		const data: any = Object.fromEntries(formData);
+		
+		const ingredientsText = (document.getElementById('ingredients-text') as HTMLTextAreaElement).value;
+		data.ingredients = ingredientsText.split('\n').filter(line => line.trim()).map(line => {
+			return { name: line.trim(), quantity: '' };
+		});
+
+		try {
+			const response = await fetch('/api/nutrition/meals', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(data)
+			});
+
+			if (response.ok) {
+				modal.style.display = 'none';
+				fetchMeals();
+			} else {
+				const err = await response.json();
+				alert(err.message || 'Error al guardar la comida');
+			}
+		} catch (error) {
+			console.error('Save error:', error);
+		}
+	};
+
+	document.addEventListener('click', (e) => {
+		const target = e.target as HTMLElement;
+		const deleteBtn = target.closest('.delete-meal-btn');
+		if (deleteBtn) {
+			const mealId = deleteBtn.closest('.meal-card')?.getAttribute('data-meal-id');
+			if (mealId) deleteMeal(Number(mealId));
+		}
+	});
+
+	fetchMeals();
+</script>
+
+<style is:global>
+	.master-nutrition {
+		padding: var(--spacing-xl);
+		max-width: 1300px;
+		margin: 0 auto;
+		animation: fadeIn 0.5s ease;
+	}
+
+	.meals-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+		gap: var(--spacing-lg);
+	}
+
+	.meal-card {
+		padding: 0 !important;
+		overflow: hidden;
+		border: 1px solid var(--border-subtle);
+		transition: transform 0.3s ease, border-color 0.3s ease;
+	}
+
+	.meal-card:hover {
+		transform: translateY(-5px);
+		border-color: var(--primary-500);
+	}
+
+	.card-image-wrapper {
+		height: 180px;
+		position: relative;
+		background: rgba(255,255,255,0.02);
+	}
+
+	.meal-img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	.meal-img-placeholder {
+		width: 100%;
+		height: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: var(--text-muted);
+	}
+
+	.type-badge {
+		position: absolute;
+		top: 12px;
+		left: 12px;
+		padding: 4px 10px;
+		border-radius: 6px;
+		font-size: 0.7rem;
+		font-weight: 800;
+		text-transform: uppercase;
+		backdrop-filter: blur(8px);
+		border: 1px solid rgba(255,255,255,0.1);
+	}
+
+	.badge-breakfast { background: rgba(251, 146, 60, 0.8); color: white; }
+	.badge-lunch { background: rgba(34, 197, 94, 0.8); color: white; }
+	.badge-dinner { background: rgba(124, 58, 237, 0.8); color: white; }
+	.badge-snack { background: rgba(239, 68, 68, 0.8); color: white; }
+
+	.btn-delete-float {
+		position: absolute;
+		top: 12px;
+		right: 12px;
+		width: 32px;
+		height: 32px;
+		border-radius: 8px;
+		background: rgba(239, 68, 68, 0.2);
+		color: #f87171;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		backdrop-filter: blur(8px);
+		border: 1px solid rgba(239, 68, 68, 0.3);
+		transition: all 0.2s ease;
+	}
+
+	.btn-delete-float:hover {
+		background: var(--danger-500);
+		color: white;
+	}
+
+	.card-info {
+		padding: var(--spacing-lg);
+	}
+
+	.card-info h3 {
+		margin-bottom: var(--spacing-md);
+		font-size: 1.2rem;
+	}
+
+	.macros-strip {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 8px;
+		margin-bottom: var(--spacing-md);
+	}
+
+	.macro-item {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		background: rgba(255,255,255,0.03);
+		padding: 6px;
+		border-radius: 8px;
+		border: 1px solid var(--border-subtle);
+	}
+
+	.m-val { font-weight: 700; font-size: 0.85rem; }
+	.m-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; }
+
+	.ing-preview {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+		font-size: 0.8rem;
+		color: var(--text-secondary);
+		border-top: 1px solid var(--border-subtle);
+		padding-top: var(--spacing-sm);
+	}
+
+	.ing-preview .more {
+		color: var(--primary-500);
+		font-weight: 600;
+	}
+
+	.form-group select {
+		color-scheme: dark;
+	}
+
+	.form-group select option {
+		background: #1a1a2e;
+		color: #f8fafc;
+	}
+
+	.macros-grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: var(--spacing-md);
+	}
+
+	@media (max-width: 768px) {
+		.meals-grid { grid-template-columns: 1fr; }
+		.macros-grid { grid-template-columns: 1fr; }
+	}
+</style>

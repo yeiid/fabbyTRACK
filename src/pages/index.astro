@@ -1,0 +1,109 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Bienvenido">
+	<main class="page-center overflow-hidden">
+		<div class="hero-glow"></div>
+		<section class="hero">
+			<div class="content glass-card">
+				<div class="hero-logo">F</div>
+				<h1 class="title">FabbyTRACK</h1>
+				<p class="subtitle">Entrena con propósito. Transforma tu vida.</p>
+				<div class="actions">
+					<a href="/login" class="btn btn-primary btn-lg">Iniciar Sesión</a>
+					<a href="/register" class="btn btn-outline btn-lg">Crear Cuenta</a>
+				</div>
+			</div>
+		</section>
+	</main>
+</BaseLayout>
+
+<style>
+	.overflow-hidden {
+		overflow: hidden;
+		position: relative;
+	}
+
+	.hero-glow {
+		position: absolute;
+		width: 600px;
+		height: 600px;
+		background: radial-gradient(circle, var(--primary-500) 0%, transparent 70%);
+		filter: blur(80px);
+		opacity: 0.15;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		pointer-events: none;
+	}
+
+	.hero {
+		z-index: 1;
+		width: 100%;
+		max-width: 480px;
+		padding: var(--spacing-lg);
+	}
+
+	.content {
+		text-align: center;
+		padding: var(--spacing-xl) !important;
+		border-radius: var(--radius-xl) !important;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--spacing-lg);
+		animation: fadeIn 0.5s ease;
+	}
+
+	.hero-logo {
+		width: 64px;
+		height: 64px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: linear-gradient(135deg, var(--primary-500), var(--accent-400));
+		border-radius: 18px;
+		font-weight: 800;
+		font-size: 1.8rem;
+		color: white;
+		font-family: 'Outfit', sans-serif;
+		box-shadow: 0 8px 24px rgba(124, 58, 237, 0.3);
+		margin-bottom: var(--spacing-xs);
+	}
+
+	.title {
+		font-size: 3.5rem;
+		background: linear-gradient(135deg, var(--text-primary) 0%, var(--primary-500) 100%);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		letter-spacing: -2px;
+	}
+
+	.subtitle {
+		color: var(--text-secondary);
+		font-size: 1.1rem;
+	}
+
+	.actions {
+		display: flex;
+		gap: var(--spacing-md);
+		margin-top: var(--spacing-md);
+		flex-wrap: wrap;
+		justify-content: center;
+		width: 100%;
+	}
+
+	.btn-lg {
+		padding: 0.85rem 2rem;
+		font-size: 1rem;
+		flex: 1;
+		min-width: 160px;
+	}
+
+	@media (max-width: 640px) {
+		.hero-logo { width: 52px; height: 52px; font-size: 1.4rem; }
+		.title { font-size: 2.5rem; }
+		.subtitle { font-size: 1rem; }
+	}
+</style>

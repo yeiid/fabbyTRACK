@@ -1,0 +1,14 @@
+---
+interface Props {
+  icon?: string;
+  message?: string;
+}
+
+const { icon = '📭', message = 'No hay elementos para mostrar' } = Astro.props;
+---
+
+<div class="empty-state">
+  <span class="empty-icon">{icon}</span>
+  <p>{message}</p>
+  <slot />
+</div>

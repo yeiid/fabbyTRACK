@@ -1,0 +1,47 @@
+---
+interface Props {
+  name: string;
+  label: string;
+  type?: string;
+  required?: boolean;
+  placeholder?: string;
+  value?: string;
+  error?: string;
+}
+
+const { name, label, type = 'text', required = false, placeholder, value, error } = Astro.props;
+---
+
+<div class="form-group">
+  <label for={name}>{label}{required && ' *'}</label>
+  {type === 'textarea' ? (
+    <textarea
+      id={name}
+      name={name}
+      required={required}
+      placeholder={placeholder}
+    >{value}</textarea>
+  ) : type === 'select' ? (
+    <select id={name} name={name} required={required}>
+      <slot />
+    </select>
+  ) : (
+    <input
+      type={type}
+      id={name}
+      name={name}
+      required={required}
+      placeholder={placeholder}
+      value={value}
+    />
+  )}
+  {error && <span class="field-error">{error}</span>}
+</div>
+
+<style>
+  .field-error {
+    font-size: var(--text-xs);
+    color: var(--danger-500);
+    margin-top: 2px;
+  }
+</style>

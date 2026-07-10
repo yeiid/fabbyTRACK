@@ -1,0 +1,539 @@
+---
+// src/pages/dashboard/index.astro
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const session = Astro.cookies.get('user_session')?.json();
+if (!session) {
+	return Astro.redirect('/login');
+}
+---
+
+<BaseLayout title="Dashboard">
+	<main class="dashboard">
+		<header class="dashboard-header">
+			<div class="user-welcome">
+				<h1>Hola, {session.name} 👋</h1>
+				<p id="today-date"></p>
+			</div>
+			<div class="header-actions">
+				<a href="/dashboard/profile" class="btn btn-outline btn-sm">Editar Perfil / Medidas</a>
+				<button id="logout-btn" class="btn btn-outline btn-sm">Cerrar Sesión</button>
+			</div>
+		</header>
+
+		<!-- Resumen de Calorías (Mockup 4) -->
+		<section class="calorie-summary glass-card">
+			<div class="calorie-item">
+				<span class="label">Mantenimiento</span>
+				<span id="maint-cals" class="value">0</span>
+				<span class="unit">kcal</span>
+			</div>
+			<div class="calorie-divider"></div>
+			<div class="calorie-item highlight">
+				<span class="label">Objetivo Diario</span>
+				<span id="target-cals" class="value">0</span>
+				<span class="unit">kcal</span>
+			</div>
+		</section>
+
+		<div class="dashboard-grid">
+			<!-- Columna 1: Rutina -->
+			<section class="plan-section">
+				<div class="section-header">
+					<h2>🏋️ Mi Rutina de Hoy</h2>
+					<span class="day-badge" id="routine-day">-</span>
+				</div>
+				<div id="routine-container" class="plan-list">
+					<div class="glass-card empty-state">
+						<p>Tu coach aún no te ha asignado una rutina para hoy.</p>
+					</div>
+				</div>
+			</section>
+
+			<!-- Columna 2: Nutrición -->
+			<section class="plan-section">
+				<div class="section-header">
+					<h2>🥗 Mi Menú de Hoy</h2>
+					<span class="day-badge" id="menu-day">-</span>
+				</div>
+				<div id="meals-container" class="plan-list">
+					<div class="loading">Cargando menú...</div>
+				</div>
+			</section>
+		</div>
+	</main>
+</BaseLayout>
+
+<script>
+	const DAY_LABELS: Record<string, string> = {
+		breakfast: 'Desayuno', lunch: 'Almuerzo', dinner: 'Cena', snack: 'Snack'
+	};
+
+	function animCount(el: HTMLElement, target: number) {
+		let current = 0;
+		const step = Math.max(1, Math.floor(target / 30));
+		const interval = setInterval(() => {
+			current += step;
+			if (current >= target) { current = target; clearInterval(interval); }
+			el.textContent = String(current);
+		}, 30);
+	}
+
+	async function loadDashboard() {
+		const maintSpan = document.getElementById('maint-cals')!;
+		const targetSpan = document.getElementById('target-cals')!;
+		const mealsContainer = document.getElementById('meals-container')!;
+		const routineContainer = document.getElementById('routine-container')!;
+		const datePara = document.getElementById('today-date')!;
+		const routineDay = document.getElementById('routine-day')!;
+		const menuDay = document.getElementById('menu-day')!;
+		const logoutBtn = document.getElementById('logout-btn')!;
+
+		const now = new Date();
+		datePara.textContent = now.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+		logoutBtn.onclick = async () => {
+			await fetch('/api/auth/logout', { method: 'POST' });
+			window.location.href = '/login';
+		};
+
+		try {
+			const response = await fetch('/api/users/today-plan');
+			const data = await response.json();
+			const routines = Array.isArray(data.routines) ? data.routines : [];
+			const meals = Array.isArray(data.meals) ? data.meals : [];
+
+			animCount(maintSpan, Number(data.calories?.maintenance_calories ?? 0));
+			animCount(targetSpan, Number(data.calories?.target_calories ?? 0));
+			routineDay.textContent = data.day ?? '-';
+			menuDay.textContent = data.day ?? '-';
+
+			if (routines.length === 0) {
+				routineContainer.innerHTML = `
+					<div class="empty-state-card glass-card">
+						<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="empty-icon"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+						<p>Tu coach aun no te ha asignado una rutina para hoy.</p>
+					</div>
+				`;
+			} else {
+				routineContainer.innerHTML = routines.map((r: any, ri: number) => `
+					<div class="routine-card glass-card" style="animation-delay: ${ri * 0.1}s">
+						<div class="routine-head">
+							<div class="routine-icon">
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/></svg>
+							</div>
+							<h3>${r.routine_name ?? 'Rutina'}</h3>
+						</div>
+						${r.routine_description ? `<p class="routine-desc">${r.routine_description}</p>` : ''}
+						<div class="exercise-list">
+							${(Array.isArray(r.exercises) ? r.exercises : []).map((ex: any, ei: number) => `
+								<div class="exercise-item" style="animation-delay: ${(ri * 0.1) + (ei * 0.05)}s">
+									<div class="ex-header">
+										<span class="ex-name">${ex.name ?? 'Ejercicio'}</span>
+										<span class="ex-sets">${ex.sets ?? '-'}<span class="ex-times">x</span>${ex.reps ?? '-'}</span>
+									</div>
+									<div class="ex-meta">
+										<span class="muscle-tag">${ex.muscle_group || 'General'}</span>
+										<span class="diff-dot ${ex.difficulty || ''}"></span>
+										<span class="diff-label">${ex.difficulty === 'beginner' ? 'Principiante' : ex.difficulty === 'intermediate' ? 'Intermedio' : ex.difficulty === 'advanced' ? 'Avanzado' : ''}</span>
+										${ex.rest_seconds ? `<span class="rest-tag">${ex.rest_seconds}s descanso</span>` : ''}
+									</div>
+								</div>
+							`).join('')}
+						</div>
+					</div>
+				`).join('');
+			}
+
+			if (meals.length === 0) {
+				mealsContainer.innerHTML = `
+					<div class="empty-state-card glass-card">
+						<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="empty-icon"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+						<p>No tienes comidas asignadas para hoy.</p>
+					</div>
+				`;
+			} else {
+				mealsContainer.innerHTML = meals.map((meal: any, i: number) => `
+					<div class="plan-card glass-card" style="animation-delay: ${i * 0.08}s">
+						<div class="plan-card-header">
+							<span class="meal-type-tag ${meal.meal_type}">${DAY_LABELS[meal.meal_type] || meal.meal_type}</span>
+							<span class="cals">${meal.total_calories || 0} kcal</span>
+						</div>
+						<h3>${meal.name}</h3>
+						<div class="macros-bar">
+							<div class="macro-fill" style="width:${Math.min(100, (meal.protein_g || 0) * 10)}%;background:var(--accent-400)"></div>
+							<div class="macro-fill" style="width:${Math.min(100, (meal.carbs_g || 0) * 6)}%;background:var(--primary-500)"></div>
+							<div class="macro-fill" style="width:${Math.min(100, (meal.fat_g || 0) * 15)}%;background:var(--success-500)"></div>
+						</div>
+						<div class="macros-mini">
+							<span>P <strong>${meal.protein_g || 0}g</strong></span>
+							<span>C <strong>${meal.carbs_g || 0}g</strong></span>
+							<span>G <strong>${meal.fat_g || 0}g</strong></span>
+						</div>
+					</div>
+				`).join('');
+			}
+		} catch {
+			mealsContainer.innerHTML = '<div class="error-state">Error al cargar el dashboard.</div>';
+			routineContainer.innerHTML = '<div class="error-state">Error al cargar rutinas.</div>';
+		}
+	}
+
+	loadDashboard();
+</script>
+
+<style>
+	.dashboard {
+		padding: var(--spacing-xl);
+		max-width: 1200px;
+		margin: 0 auto;
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-xl);
+		animation: fadeIn 0.4s ease;
+	}
+
+	.dashboard-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: var(--spacing-md);
+	}
+
+	.user-welcome h1 {
+		font-size: 2.5rem;
+		background: linear-gradient(to right, #fff, var(--primary-500));
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+	}
+
+	.user-welcome p {
+		color: var(--text-secondary);
+		text-transform: capitalize;
+	}
+
+	.header-actions {
+		display: flex;
+		gap: var(--spacing-sm);
+	}
+
+	.calorie-summary {
+		display: flex;
+		justify-content: space-around;
+		align-items: center;
+		padding: var(--spacing-xl) !important;
+		text-align: center;
+		background: linear-gradient(135deg, rgba(124,58,237,0.08) 0%, rgba(15,15,26,1) 100%) !important;
+	}
+
+	.calorie-item {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	.calorie-item .label {
+		font-size: 0.8rem;
+		color: var(--text-secondary);
+		text-transform: uppercase;
+		letter-spacing: 1px;
+	}
+
+	.calorie-item .value {
+		font-size: 2.5rem;
+		font-weight: 800;
+		line-height: 1;
+		font-family: 'Outfit', sans-serif;
+	}
+
+	.calorie-item .unit {
+		font-size: 0.9rem;
+		color: var(--text-muted);
+	}
+
+	.calorie-item.highlight .value {
+		color: var(--primary-500);
+		text-shadow: 0 0 20px var(--border-glow);
+	}
+
+	.calorie-divider {
+		width: 1px;
+		height: 60px;
+		background: var(--border-subtle);
+	}
+
+	.dashboard-grid {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: var(--spacing-xl);
+	}
+
+	.plan-section {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-lg);
+	}
+
+	.section-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	.section-header h2 {
+		font-size: var(--text-xl);
+	}
+
+	.day-badge {
+		background: var(--bg-glass);
+		padding: 0.25rem 0.85rem;
+		border-radius: 100px;
+		font-size: var(--text-sm);
+		color: var(--primary-500);
+		border: 1px solid var(--border-glow);
+		font-weight: 600;
+	}
+
+	.plan-list {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-md);
+	}
+
+	/* Plan/Meal Cards */
+	.plan-card {
+		padding: var(--spacing-lg) !important;
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-sm);
+		animation: slideUp 0.3s ease backwards;
+	}
+
+	.plan-card:hover {
+		border-color: var(--primary-500);
+		transform: translateY(-2px);
+	}
+
+	.plan-card-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		font-size: 0.8rem;
+	}
+
+	.meal-type-tag {
+		font-weight: 700;
+		text-transform: uppercase;
+		font-size: 0.65rem;
+		padding: 2px 8px;
+		border-radius: 4px;
+		letter-spacing: 0.5px;
+	}
+
+	.meal-type-tag.breakfast { background: rgba(251,146,60,0.15); color: var(--accent-400); }
+	.meal-type-tag.lunch { background: rgba(34,197,94,0.15); color: var(--success-500); }
+	.meal-type-tag.dinner { background: rgba(124,58,237,0.15); color: var(--primary-500); }
+	.meal-type-tag.snack { background: rgba(239,68,68,0.15); color: var(--danger-500); }
+
+	.plan-card-header .cals {
+		color: var(--text-secondary);
+		font-weight: 600;
+	}
+
+	.plan-card h3 {
+		font-size: 1rem;
+		font-weight: 600;
+	}
+
+	.macros-bar {
+		display: flex;
+		gap: 4px;
+		height: 4px;
+		border-radius: 2px;
+		overflow: hidden;
+		background: rgba(255,255,255,0.05);
+	}
+
+	.macro-fill {
+		height: 100%;
+		border-radius: 2px;
+		transition: width 0.6s ease;
+	}
+
+	.macros-mini {
+		display: flex;
+		gap: var(--spacing-md);
+		font-size: 0.8rem;
+		color: var(--text-muted);
+		border-top: 1px solid var(--border-subtle);
+		padding-top: var(--spacing-sm);
+		margin-top: var(--spacing-xs);
+	}
+
+	.macros-mini strong {
+		color: var(--text-secondary);
+	}
+
+	/* Routine Cards */
+	.routine-card {
+		padding: var(--spacing-lg) !important;
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-md);
+		animation: slideUp 0.3s ease backwards;
+	}
+
+	.routine-card:hover {
+		border-color: var(--primary-500);
+		transform: translateY(-2px);
+	}
+
+	.routine-head {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-sm);
+	}
+
+	.routine-icon {
+		width: 36px;
+		height: 36px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: rgba(124,58,237,0.1);
+		border-radius: 10px;
+		color: var(--primary-500);
+		flex-shrink: 0;
+	}
+
+	.routine-card h3 {
+		font-size: 1.1rem;
+		color: var(--primary-500);
+	}
+
+	.routine-desc {
+		font-size: 0.85rem;
+		color: var(--text-secondary);
+	}
+
+	.exercise-list {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-sm);
+	}
+
+	.exercise-item {
+		background: rgba(255, 255, 255, 0.02);
+		border: 1px solid var(--border-subtle);
+		border-radius: var(--radius-sm);
+		padding: var(--spacing-sm) var(--spacing-md);
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		animation: slideUp 0.25s ease backwards;
+	}
+
+	.exercise-item:hover {
+		background: rgba(124,58,237,0.03);
+		border-color: rgba(124,58,237,0.2);
+	}
+
+	.ex-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	.ex-name {
+		font-weight: 600;
+		font-size: 0.9rem;
+	}
+
+	.ex-sets {
+		font-size: 0.9rem;
+		color: var(--primary-500);
+		font-weight: 700;
+		font-family: 'Outfit', sans-serif;
+	}
+
+	.ex-times {
+		color: var(--text-muted);
+		margin: 0 2px;
+	}
+
+	.ex-meta {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-sm);
+		font-size: 0.7rem;
+	}
+
+	.muscle-tag {
+		color: var(--text-muted);
+		text-transform: uppercase;
+		font-weight: 600;
+	}
+
+	.diff-dot {
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: var(--text-muted);
+	}
+
+	.diff-dot.beginner { background: var(--success-500); }
+	.diff-dot.intermediate { background: var(--accent-400); }
+	.diff-dot.advanced { background: var(--danger-500); }
+
+	.diff-label {
+		color: var(--text-muted);
+	}
+
+	.rest-tag {
+		color: var(--text-muted);
+		margin-left: auto;
+	}
+
+	/* Empty states */
+	.empty-state-card {
+		text-align: center;
+		padding: var(--spacing-xl) var(--spacing-lg) !important;
+		color: var(--text-muted);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--spacing-md);
+	}
+
+	.empty-state-card .empty-icon {
+		opacity: 0.3;
+	}
+
+	.error-state {
+		padding: var(--spacing-xl);
+		text-align: center;
+		color: var(--danger-500);
+	}
+
+	/* Animations */
+	@keyframes slideUp {
+		from { opacity: 0; transform: translateY(16px); }
+		to { opacity: 1; transform: translateY(0); }
+	}
+
+	@media (max-width: 900px) {
+		.dashboard { padding: var(--spacing-lg); }
+		.dashboard-grid { grid-template-columns: 1fr; }
+		.calorie-summary { flex-direction: column; gap: var(--spacing-lg); }
+		.calorie-divider { width: 60%; height: 1px; }
+		.header-actions { width: 100%; justify-content: flex-start; flex-wrap: wrap; }
+	}
+
+	@media (max-width: 640px) {
+		.user-welcome h1 { font-size: 2rem; }
+		.calorie-summary { padding: var(--spacing-lg) !important; }
+		.calorie-item .value { font-size: 2rem; }
+		.macros-mini { flex-wrap: wrap; gap: var(--spacing-sm); }
+	}
+</style>

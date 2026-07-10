@@ -1,0 +1,14 @@
+---
+interface Props {
+  icon?: string;
+  message?: string;
+}
+
+const { icon = '⚠️', message = 'Ha ocurrido un error' } = Astro.props;
+---
+
+<div class="error-state">
+  <span class="error-icon">{icon}</span>
+  <p>{message}</p>
+  <slot />
+</div>

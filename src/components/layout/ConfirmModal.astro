@@ -1,0 +1,85 @@
+---
+interface Props {
+  id?: string;
+}
+
+const { id = 'confirm-modal' } = Astro.props;
+---
+
+<div id={id} class="confirm-modal">
+  <div class="confirm-backdrop"></div>
+  <div class="confirm-content glass-card">
+    <div class="confirm-icon" id={`${id}-icon`}>
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    </div>
+    <p id={`${id}-message`}>?Estas seguro?</p>
+    <div class="confirm-actions">
+      <button class="btn btn-outline" id={`${id}-cancel`}>Cancelar</button>
+      <button class="btn btn-danger" id={`${id}-confirm`}>Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .confirm-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal, 1000);
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-lg);
+  }
+
+  .confirm-modal.show {
+    display: flex;
+  }
+
+  .confirm-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+  }
+
+  .confirm-content {
+    position: relative;
+    max-width: 380px;
+    width: 100%;
+    padding: var(--spacing-xl);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-lg);
+    animation: fadeIn 0.2s ease;
+    background: var(--bg-secondary);
+  }
+
+  .confirm-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger-500);
+  }
+
+  .confirm-content p {
+    font-size: var(--text-base);
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  .confirm-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    width: 100%;
+  }
+
+  .confirm-actions .btn {
+    flex: 1;
+  }
+</style>
