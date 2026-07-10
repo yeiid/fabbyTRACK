@@ -17,7 +17,7 @@ COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
 ENV HOST=0.0.0.0
-ENV PORT=4321
-EXPOSE 4321
+ENV PORT=4325
+EXPOSE 4325
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
