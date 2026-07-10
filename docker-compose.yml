@@ -2,8 +2,8 @@ services:
   app:
     build: .
     container_name: fabbytrack-app
-    ports:
-      - "4321:4321"
+    expose:
+      - "4321"
     environment:
       - NODE_ENV=production
       - HOST=0.0.0.0
