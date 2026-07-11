@@ -76,36 +76,26 @@ const mealTypes = [
 
 				<!-- Tab Rutina -->
 				<div id="routine-tab" class="tab-content">
-					<div class="routine-picker-section">
-						<div class="routine-select-group">
-							<label for="weekly-routine-select">Rutina</label>
-							<select id="weekly-routine-select">
-								<option value="">Ninguna</option>
-							</select>
-						</div>
-						<div class="day-picker">
-							<span class="day-picker-label">Días de aplicación:</span>
-							<div class="day-chips" id="day-chips">
-								{days.map(day => (
-									<label class="day-chip" data-day={day}>
-										<input type="checkbox" checked>
-										<span class="day-chip-text">{day.substring(0, 3)}</span>
-									</label>
-								))}
-							</div>
+					<div class="tab-header">
+						<h3 class="tab-title">Asignar Rutina por Día</h3>
+						<div class="tab-actions">
+							<button class="btn btn-outline btn-sm copy-routine-monday" title="Asignar la rutina del Lunes a todos los días">
+								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+								Copiar Lunes a Todos
+							</button>
+							<button class="btn btn-outline btn-sm clear-routine-all" title="Limpiar todas las asignaciones de rutina">
+								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+								Limpiar Todo
+							</button>
 						</div>
 					</div>
-					<div class="calendar-wrapper mini">
-						<div id="routine-calendar" class="wc-grid mini"></div>
+					<div class="calendar-wrapper">
+						<div id="routine-calendar" class="wc-grid"></div>
 					</div>
 					<div class="actions">
 						<button id="save-routines" class="btn btn-primary">
 							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
 							Guardar Rutinas
-						</button>
-						<button id="clear-routine" class="btn btn-outline" style="display:none;">
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-							Limpiar
 						</button>
 						<span id="routine-saving" class="saving-text" style="display:none;">Guardando...</span>
 					</div>

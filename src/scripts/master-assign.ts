@@ -16,11 +16,8 @@ const feedbackEl = document.getElementById('assign-feedback') as HTMLDivElement;
 const weekLabel = document.getElementById('week-label')!;
 const prevWeekBtn = document.getElementById('prev-week')!;
 const nextWeekBtn = document.getElementById('next-week')!;
-const weeklyRoutineSelect = document.getElementById('weekly-routine-select') as HTMLSelectElement;
-const clearRoutineBtn = document.getElementById('clear-routine') as HTMLButtonElement;
 const nutritionCalendar = document.getElementById('nutrition-calendar')!;
 const routineCalendar = document.getElementById('routine-calendar')!;
-const dayChips = document.getElementById('day-chips')!;
 
 let allUsers: any[] = [];
 let meals: any[] = [];
@@ -93,7 +90,6 @@ async function init() {
 
     renderUsers(allUsers);
     userSearch.placeholder = `Buscar entre ${allUsers.length} usuarios...`;
-    populateRoutineOptions();
     currentWeekStart = getMonday(new Date());
     renderWeek();
   } catch (err) {
@@ -131,12 +127,14 @@ function filterUsers(query: string) {
 }
 
 function populateRoutineOptions() {
-  weeklyRoutineSelect.innerHTML = '<option value="">Ninguna</option>' +
-    routines.map((r: any) => {
-      const color = getRoutineColor(r.id);
-      const count = r.exercise_count ? ` [${r.exercise_count} ej.]` : '';
-      return `<option value="${r.id}" style="border-left: 3px solid ${color};">${r.name}${count}</option>`;
-    }).join('');
+  document.querySelectorAll('.routine-select').forEach(select => {
+    select.innerHTML = '<option value="">Ninguna</option>' +
+      routines.map((r: any) => {
+        const color = getRoutineColor(r.id);
+        const count = r.exercise_count ? ` [${r.exercise_count} ej.]` : '';
+        return `<option value="${r.id}">${r.name}${count}</option>`;
+      }).join('');
+  });
 }
 
 function populateMealOptions(container: HTMLElement) {
@@ -153,13 +151,25 @@ function populateMealOptions(container: HTMLElement) {
   });
 }
 
+function updateRoutineCellColor(select: HTMLSelectElement) {
+  const cell = select.closest('.wc-cell')!;
+  const val = select.value;
+  if (val) {
+    const color = getRoutineColor(Number(val));
+    cell.style.borderLeft = `4px solid ${color}`;
+    cell.style.background = `${color}10`;
+  } else {
+    cell.style.borderLeft = '';
+    cell.style.background = '';
+  }
+}
+
 /* ─── Week Calendar Renderers ─── */
 
 function renderWeek() {
   weekLabel.textContent = formatWeekLabel(currentWeekStart);
   renderNutritionCalendar();
   renderRoutineCalendar();
-  // if user is selected, reload assignments for new week context
   if (userSelect.value) {
     loadAssignments(userSelect.value);
   }
@@ -198,43 +208,31 @@ function renderRoutineCalendar() {
   const cells = dates.map((d, i) => {
     const day = dayNames[i];
     const dayNum = d.getDate();
-    const dayName = dayShort[i];
+    const options = routines.map((r: any) => {
+      const count = r.exercise_count ? ` [${r.exercise_count} ej.]` : '';
+      return `<option value="${r.id}">${r.name}${count}</option>`;
+    }).join('');
     return `
-      <div class="wc-cell mini" data-day="${day}">
+      <div class="wc-cell" data-day="${day}">
         <div class="wc-day-header">
-          <span class="wc-day-name">${dayName}</span>
+          <span class="wc-day-name">${dayShort[i]}</span>
           <span class="wc-day-num">${dayNum}</span>
         </div>
-        <div class="mini-routine-display" data-day="${day}"></div>
+        <div class="routine-slot">
+          <label class="meal-label">Rutina</label>
+          <select class="routine-select" data-day="${day}">
+            <option value="">Ninguna</option>
+            ${options}
+          </select>
+        </div>
       </div>
     `;
   }).join('');
 
   routineCalendar.innerHTML = `<div class="wc-row wc-body">${cells}</div>`;
-}
 
-function updateRoutineCalendar(assignments: Record<string, number>) {
-  routineCalendar.querySelectorAll('.mini-routine-display').forEach(el => {
-    const day = el.getAttribute('data-day')!;
-    const routineId = assignments[day];
-    if (routineId) {
-      const color = getRoutineColor(routineId);
-      const name = getRoutineName(routineId);
-      (el as HTMLElement).innerHTML = `
-        <div class="mini-routine-bar" style="background:${color};"></div>
-        <span class="mini-routine-name">${name}</span>
-      `;
-    } else {
-      (el as HTMLElement).innerHTML = `<span class="mini-routine-empty">—</span>`;
-    }
-  });
-}
-
-function highlightDayChips(assignments: Record<string, number>) {
-  dayChips.querySelectorAll('.day-chip').forEach(chip => {
-    const day = chip.getAttribute('data-day')!;
-    const cb = chip.querySelector('input[type="checkbox"]') as HTMLInputElement;
-    cb.checked = !!assignments[day];
+  routineCalendar.querySelectorAll('.routine-select').forEach(s => {
+    s.addEventListener('change', () => updateRoutineCellColor(s as HTMLSelectElement));
   });
 }
 
@@ -259,31 +257,16 @@ async function loadAssignments(userId: string) {
 
     if (routinesRes.ok) {
       const routineData = await routinesRes.json();
-      const byDay: Record<string, number> = {};
-      routineData.forEach((a: any) => { byDay[a.day_of_week] = a.routine_id; });
-
-      const assigned = routineData.filter((a: any) => a.routine_id).map((a: any) => a.routine_id);
-      let mode = 0;
-      if (assigned.length > 0) {
-        mode = assigned.sort((a: number, b: number) =>
-          assigned.filter((v: number) => v === a).length - assigned.filter((v: number) => v === b).length
-        ).pop();
-        weeklyRoutineSelect.value = String(mode);
-      } else {
-        weeklyRoutineSelect.value = '';
-      }
-
-      updateRoutineCalendar(byDay);
-      highlightDayChips(byDay);
-      updateClearButton();
+      routineCalendar.querySelectorAll('.routine-select').forEach(s => {
+        const day = s.getAttribute('data-day');
+        const match = routineData.find((a: any) => a.day_of_week === day);
+        s.value = match ? String(match.routine_id) : '';
+        updateRoutineCellColor(s as HTMLSelectElement);
+      });
     }
   } catch (error) {
     console.error('Load assignments error:', error);
   }
-}
-
-function updateClearButton() {
-  clearRoutineBtn.style.display = weeklyRoutineSelect.value ? 'inline-flex' : 'none';
 }
 
 /* ─── Event Listeners ─── */
@@ -323,50 +306,26 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-weeklyRoutineSelect.addEventListener('change', () => {
-  updateClearButton();
-  const routineId = weeklyRoutineSelect.value;
-  if (routineId) {
-    const byDay: Record<string, number> = {};
-    dayChips.querySelectorAll('.day-chip').forEach(chip => {
-      const cb = chip.querySelector('input[type="checkbox"]') as HTMLInputElement;
-      if (cb.checked) {
-        byDay[chip.getAttribute('data-day')!] = Number(routineId);
-      }
-    });
-    updateRoutineCalendar(byDay);
-  } else {
-    const byDay: Record<string, number> = {};
-    updateRoutineCalendar(byDay);
+document.querySelector('.copy-routine-monday')?.addEventListener('click', () => {
+  const mondaySelect = routineCalendar.querySelector('.routine-select[data-day="Lunes"]') as HTMLSelectElement;
+  if (!mondaySelect || !mondaySelect.value) {
+    showFeedback('Primero selecciona una rutina para el Lunes', true);
+    return;
   }
-});
-
-dayChips.addEventListener('change', (e) => {
-  const target = e.target as HTMLInputElement;
-  if (target.type === 'checkbox') {
-    const routineId = weeklyRoutineSelect.value;
-    if (routineId) {
-      const byDay: Record<string, number> = {};
-      dayChips.querySelectorAll('.day-chip').forEach(chip => {
-        const cb = chip.querySelector('input[type="checkbox"]') as HTMLInputElement;
-        if (cb.checked) {
-          byDay[chip.getAttribute('data-day')!] = Number(routineId);
-        }
-      });
-      updateRoutineCalendar(byDay);
-    }
-  }
-});
-
-clearRoutineBtn.addEventListener('click', () => {
-  if (!confirm('¿Limpiar la rutina semanal?')) return;
-  weeklyRoutineSelect.value = '';
-  dayChips.querySelectorAll('.day-chip').forEach(chip => {
-    (chip.querySelector('input[type="checkbox"]') as HTMLInputElement).checked = true;
+  routineCalendar.querySelectorAll('.routine-select').forEach(s => {
+    s.value = mondaySelect.value;
+    updateRoutineCellColor(s as HTMLSelectElement);
   });
-  updateRoutineCalendar({});
-  updateClearButton();
-  showFeedback('Rutina limpiada');
+  showFeedback('Rutina del Lunes copiada a todos los días');
+});
+
+document.querySelector('.clear-routine-all')?.addEventListener('click', () => {
+  if (!confirm('¿Limpiar todas las asignaciones de rutina?')) return;
+  routineCalendar.querySelectorAll('.routine-select').forEach(s => {
+    s.value = '';
+    updateRoutineCellColor(s as HTMLSelectElement);
+  });
+  showFeedback('Rutinas limpiadas');
 });
 
 document.getElementById('save-nutrition')!.onclick = async () => {
@@ -426,27 +385,28 @@ document.getElementById('save-routines')!.onclick = async () => {
     return;
   }
 
-  const routineId = weeklyRoutineSelect.value;
-  const assignments: { routine_id: number; day_of_week: string }[] = [];
-
-  if (routineId) {
-    dayChips.querySelectorAll('.day-chip').forEach(chip => {
-      const cb = chip.querySelector('input[type="checkbox"]') as HTMLInputElement;
-      if (cb.checked) {
-        assignments.push({
-          routine_id: Number(routineId),
-          day_of_week: chip.getAttribute('data-day')!,
-        });
-      }
-    });
-  }
-
-  if (assignments.length === 0) {
-    if (!confirm('No hay días seleccionados. ¿Limpiar todas las rutinas de este usuario?')) return;
-  }
-
   btn.disabled = true;
   saving.style.display = 'inline';
+
+  const assignments: { routine_id: number; day_of_week: string }[] = [];
+
+  routineCalendar.querySelectorAll('.routine-select').forEach((select) => {
+    const s = select as HTMLSelectElement;
+    if (s.value) {
+      assignments.push({
+        routine_id: Number(s.value),
+        day_of_week: s.getAttribute('data-day')!,
+      });
+    }
+  });
+
+  if (assignments.length === 0) {
+    if (!confirm('No hay rutinas seleccionadas. ¿Limpiar todas las rutinas de este usuario?')) {
+      btn.disabled = false;
+      saving.style.display = 'none';
+      return;
+    }
+  }
 
   try {
     const response = await fetch('/api/routines/assign', {
