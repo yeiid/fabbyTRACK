@@ -1,0 +1,360 @@
+.master-assign {
+	padding: var(--spacing-xl);
+	max-width: 1300px;
+	margin: 0 auto;
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-xl);
+}
+
+/* User Selector with Search */
+.user-selector {
+	margin-bottom: var(--spacing-lg);
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-sm);
+}
+
+.user-selector label {
+	font-size: var(--text-sm);
+	color: var(--text-secondary);
+	font-weight: 600;
+}
+
+.user-select-wrapper {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-xs);
+	max-width: 450px;
+}
+
+.user-select-wrapper input {
+	padding: 0.65rem 0.85rem;
+	border-radius: var(--radius-md);
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid var(--border-subtle);
+	color: white;
+	outline: none;
+	font-size: var(--text-sm);
+	transition: border-color var(--transition-base);
+}
+
+.user-select-wrapper input:focus {
+	border-color: var(--primary-500);
+	box-shadow: 0 0 0 2px var(--border-glow);
+}
+
+.user-select-wrapper input::placeholder {
+	color: var(--text-muted);
+}
+
+.user-selector select {
+	padding: 0.65rem 0.85rem;
+	border-radius: var(--radius-md);
+	color: white;
+	width: 100%;
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid var(--border-subtle);
+	outline: none;
+	transition: border-color var(--transition-base);
+	color-scheme: dark;
+	font-size: var(--text-sm);
+}
+
+.user-selector select:focus {
+	border-color: var(--primary-500);
+}
+
+.user-selector select option {
+	background: #1a1a2e;
+	color: #f8fafc;
+}
+
+/* Tabs */
+.tabs {
+	display: flex;
+	gap: 0;
+	border-bottom: 1px solid var(--border-subtle);
+	margin-bottom: var(--spacing-lg);
+}
+
+.tab-btn {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-sm);
+	padding: 0.85rem 2rem;
+	color: var(--text-secondary);
+	border-bottom: 2px solid transparent;
+	transition: all var(--transition-base);
+	font-weight: 500;
+}
+
+.tab-btn:hover {
+	color: var(--text-primary);
+}
+
+.tab-btn.active {
+	color: var(--primary-500);
+	border-bottom-color: var(--primary-500);
+}
+
+.tab-icon {
+	font-size: 1.2rem;
+}
+
+/* Tab Header with actions */
+.tab-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--spacing-md);
+	margin-bottom: var(--spacing-md);
+}
+
+.tab-title {
+	color: var(--text-primary);
+	font-size: var(--text-lg);
+	margin: 0;
+}
+
+.tab-actions {
+	display: flex;
+	gap: var(--spacing-sm);
+	flex-wrap: wrap;
+}
+
+.tab-actions .btn {
+	font-size: var(--text-xs);
+	padding: 0.4rem 0.75rem;
+}
+
+.tab-content {
+	display: none;
+}
+
+.tab-content.active {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-lg);
+}
+
+/* Days Grid */
+.days-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+	gap: var(--spacing-md);
+}
+
+.day-card {
+	padding: var(--spacing-md);
+	border-radius: var(--radius-lg);
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-sm);
+	transition: border-color var(--transition-base), box-shadow var(--transition-base);
+	position: relative;
+}
+
+.day-card:hover {
+	border-color: var(--border-glow);
+}
+
+.day-card.has-assignments {
+	border-color: rgba(124, 58, 237, 0.4);
+	box-shadow: 0 0 12px rgba(124, 58, 237, 0.1);
+}
+
+.day-card h4 {
+	color: var(--primary-500);
+	border-bottom: 1px solid var(--border-subtle);
+	padding-bottom: var(--spacing-xs);
+	margin-bottom: var(--spacing-xs);
+	font-size: var(--text-sm);
+}
+
+.meal-slots {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-sm);
+}
+
+.slot, .routine-slot {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+}
+
+.slot label, .routine-slot label {
+	font-size: 0.6rem;
+	color: var(--text-muted);
+	text-transform: uppercase;
+	font-weight: 600;
+	letter-spacing: 0.5px;
+}
+
+.meal-select, .routine-select {
+	padding: 0.4rem 0.6rem;
+	border-radius: var(--radius-sm);
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid var(--border-subtle);
+	color: white;
+	font-size: var(--text-xs);
+	outline: none;
+	width: 100%;
+	transition: border-color var(--transition-base);
+	color-scheme: dark;
+}
+
+.meal-select option, .routine-select option {
+	background: #1a1a2e;
+	color: #f8fafc;
+}
+
+.meal-select:focus, .routine-select:focus {
+	border-color: var(--primary-500);
+}
+
+.actions {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--spacing-md);
+	padding-top: var(--spacing-md);
+	margin-top: var(--spacing-md);
+	border-top: 1px solid var(--border-subtle);
+}
+
+.saving-text {
+	font-size: var(--text-sm);
+	color: var(--accent-400);
+	font-weight: 500;
+	animation: pulse 1s infinite;
+}
+
+.btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+	.days-grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+@media (max-width: 768px) {
+	.master-assign {
+		padding: var(--spacing-lg);
+		gap: var(--spacing-lg);
+	}
+
+	.assign-container {
+		padding: var(--spacing-md) !important;
+	}
+
+	.days-grid {
+		grid-template-columns: 1fr;
+		gap: var(--spacing-sm);
+	}
+
+	.day-card {
+		padding: var(--spacing-sm);
+	}
+
+	.day-card h4 {
+		font-size: var(--text-xs);
+	}
+
+	.tabs {
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+		scrollbar-width: none;
+	}
+
+	.tabs::-webkit-scrollbar {
+		display: none;
+	}
+
+	.tab-btn {
+		padding: 0.65rem 1rem;
+		font-size: var(--text-sm);
+		flex: 1;
+		justify-content: center;
+		white-space: nowrap;
+	}
+
+	.tab-icon {
+		font-size: 1rem;
+	}
+
+	.tab-header {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.tab-title {
+		font-size: var(--text-base);
+		text-align: center;
+	}
+
+	.tab-actions {
+		justify-content: stretch;
+	}
+
+	.tab-actions .btn {
+		flex: 1;
+		font-size: 0.7rem;
+		padding: 0.5rem 0.5rem;
+	}
+
+	.user-select-wrapper {
+		max-width: none;
+	}
+
+	.user-select-wrapper input,
+	.user-selector select {
+		font-size: 16px;
+		padding: 0.75rem 0.85rem;
+	}
+
+	.slot label, .routine-slot label {
+		font-size: 0.55rem;
+	}
+
+	.meal-select, .routine-select {
+		font-size: 16px;
+		padding: 0.5rem 0.6rem;
+	}
+
+	.actions {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.actions .btn {
+		width: 100%;
+		justify-content: center;
+	}
+
+	.saving-text {
+		text-align: center;
+	}
+}
+
+@media (max-width: 480px) {
+	.master-assign {
+		padding: var(--spacing-md);
+	}
+
+	.tab-btn {
+		padding: 0.5rem 0.75rem;
+		font-size: var(--text-xs);
+	}
+
+	.tab-btn span:not(.tab-icon) {
+		display: none;
+	}
+}

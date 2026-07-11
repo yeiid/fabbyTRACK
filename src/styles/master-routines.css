@@ -1,0 +1,127 @@
+.master-routines {
+	padding: var(--spacing-xl);
+	max-width: 1300px;
+	margin: 0 auto;
+	animation: fadeIn 0.5s ease;
+	color-scheme: dark;
+}
+
+.routines-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+	gap: var(--spacing-lg);
+}
+
+.routine-card {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-md);
+	border: 1px solid var(--border-subtle);
+	padding: var(--spacing-lg);
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.routine-card:hover {
+	transform: translateY(-5px);
+	border-color: var(--primary-500);
+	box-shadow: 0 12px 24px rgba(0,0,0,0.3);
+}
+
+.card-top {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: var(--spacing-sm);
+	flex-wrap: wrap;
+}
+
+.card-top h3 {
+	font-size: 1.25rem;
+	flex: 1;
+	min-width: 0;
+}
+
+.action-icons {
+	display: flex;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	align-items: center;
+}
+
+.icon-btn-edit,
+.icon-btn-delete,
+.icon-btn-exercises {
+	width: 40px;
+	height: 40px;
+	border-radius: var(--radius-md);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	transition: all 0.2s ease;
+	background: rgba(255, 255, 255, 0.05);
+	color: var(--text-secondary);
+}
+
+.icon-btn-exercises:hover { background: var(--accent-500); color: white; }
+
+.routine-card {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-md);
+	border: 1px solid var(--border-subtle);
+	padding: var(--spacing-lg);
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.routine-desc {
+	font-size: 0.9rem;
+	color: var(--text-secondary);
+	line-height: 1.5;
+}
+
+.card-footer {
+	margin-top: auto;
+	padding-top: var(--spacing-md);
+	border-top: 1px solid var(--border-subtle);
+}
+
+.ex-count {
+	font-size: 0.85rem;
+	color: var(--text-muted);
+}
+
+.modal-actions {
+	display: flex;
+	gap: var(--spacing-md);
+	justify-content: flex-end;
+	flex-wrap: wrap;
+}
+
+.loading-state, .empty-state, .error-state {
+	grid-column: 1 / -1;
+}
+
+@media (max-width: 640px) {
+	.master-routines {
+		padding: var(--spacing-lg);
+	}
+
+	.routines-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.card-top {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.action-icons {
+		justify-content: flex-start;
+	}
+
+	.modal-actions {
+		flex-direction: column-reverse;
+		align-items: stretch;
+	}
+}

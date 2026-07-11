@@ -19,7 +19,10 @@ const userInitial = userName ? userName.charAt(0).toUpperCase() : 'M';
     <span class="nav-logo">F</span>
     <span class="nav-title">FabbyTRACK</span>
   </div>
-  <div class="nav-links">
+  <button id="nav-toggle" class="nav-toggle" aria-label="Menu">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+  </button>
+  <div class="nav-links" id="nav-links">
     {pages.map(p => {
       const isActive = currentUrl === p.href || (p.href !== '/master' && currentUrl.startsWith(p.href));
       return (
@@ -40,6 +43,24 @@ const userInitial = userName ? userName.charAt(0).toUpperCase() : 'M';
 </nav>
 
 <script>
+  const toggle = document.getElementById('nav-toggle');
+  const links = document.getElementById('nav-links');
+
+  toggle?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    links?.classList.toggle('open');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (links?.classList.contains('open') && !links?.contains(e.target as Node) && e.target !== toggle) {
+      links?.classList.remove('open');
+    }
+  });
+
+  links?.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', () => links?.classList.remove('open'));
+  });
+
   document.getElementById('nav-logout')?.addEventListener('click', async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
     window.location.href = '/login';
@@ -88,6 +109,29 @@ const userInitial = userName ? userName.charAt(0).toUpperCase() : 'M';
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     display: none;
+  }
+
+  .nav-toggle {
+    display: none;
+    width: 40px;
+    height: 40px;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    transition: all var(--transition-fast);
+    margin-left: auto;
+    margin-right: var(--spacing-sm);
+  }
+
+  .nav-toggle:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+  }
+
+  .nav-toggle svg {
+    width: 22px;
+    height: 22px;
   }
 
   .nav-links {
@@ -166,18 +210,52 @@ const userInitial = userName ? userName.charAt(0).toUpperCase() : 'M';
     .nav-user-name { display: block; }
   }
 
+  @media (min-width: 769px) {
+    .nav-toggle { display: none !important; }
+    .nav-links { display: flex !important; }
+  }
+
   @media (max-width: 768px) {
     .master-nav {
       padding: 0 var(--spacing-md);
       height: 52px;
     }
-    .nav-link {
-      padding: 0.4rem 0.6rem;
-      font-size: var(--text-xs);
+
+    .nav-toggle {
+      display: flex;
     }
+
+    .nav-links {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      flex-direction: column;
+      background: rgba(15, 15, 26, 0.98);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: var(--spacing-sm);
+      gap: 2px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .nav-links.open {
+      display: flex;
+    }
+
+    .nav-link {
+      padding: 0.75rem var(--spacing-md);
+      font-size: var(--text-sm);
+      border-radius: var(--radius-sm);
+      width: 100%;
+    }
+
     .nav-link svg {
-      width: 16px;
-      height: 16px;
+      width: 18px;
+      height: 18px;
     }
   }
 </style>
