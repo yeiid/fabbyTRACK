@@ -133,7 +133,7 @@ button {
 }
 
 select {
-  position: relative;
+  position: static;
 }
 
 /* ============================================
